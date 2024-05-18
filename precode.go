@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -92,20 +91,21 @@ func postTask(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	// обработка ключа мапы, увеличим его на max+1, если повторяется отправляемый ID
+	//Из Тех задания "В мапе ключами являются ID задачи". Генерируется со стороны клиента
 	if _, ok := tasks[taskPost.ID]; ok {
-		//http.Error(w, "Уже существует", http.StatusNoContent)
-		alreadyExit := []int{}
-		for id := range tasks {
-			strId, _ := strconv.Atoi(id)
-			alreadyExit = append(alreadyExit, strId)
-		}
-		idNew := strconv.Itoa(Max(alreadyExit) + 1)
-		taskPost.ID = idNew
-		tasks[idNew] = taskPost
-	} else {
-		tasks[taskPost.ID] = taskPost
+		//alreadyExit := []int{}
+		//for id := range tasks {
+		//	strId, _ := strconv.Atoi(id)
+		//	alreadyExit = append(alreadyExit, strId)
+		//}
+		//idNew := strconv.Itoa(Max(alreadyExit) + 1)
+		//taskPost.ID = idNew
+		//tasks[idNew] = taskPost
+		http.Error(w, "Уже существует ID", http.StatusBadRequest)
+		return
 	}
+	tasks[taskPost.ID] = taskPost
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 }
@@ -137,9 +137,8 @@ func delTaskId(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		http.Error(w, "Не найдено", http.StatusNoContent)
 		return
-	} else {
-		delete(tasks, id)
 	}
+	delete(tasks, id)
 
 	resp, err := json.Marshal(tskid)
 	if err != nil {
